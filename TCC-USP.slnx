@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/Itens de Solução/">
+    <File Path="Dockerfile.txt" />
+  </Folder>
+  <Project Path="Zeladoria.API/Zeladoria.API.csproj" />
+  <Project Path="Zeladoria.Application/Zeladoria.Application.csproj" />
+  <Project Path="Zeladoria.Domain/Zeladoria.Domain.csproj" />
+  <Project Path="Zeladoria.Infrastructure/Zeladoria.Infrastructure.csproj" />
+</Solution>

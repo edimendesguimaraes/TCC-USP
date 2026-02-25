@@ -1,6 +1,0 @@
-@ApiHelloGit_HostAddress = http://localhost:5107
-
-GET {{ApiHelloGit_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
