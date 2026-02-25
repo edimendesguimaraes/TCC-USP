@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using Zeladoria.Application.DTOs;
 using Zeladoria.Domain.Entities;
 using Zeladoria.Domain.Interfaces;
 
 namespace Zeladoria.API.Controllers;
-
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class OcorrenciasController : ControllerBase
@@ -19,8 +21,14 @@ public class OcorrenciasController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> RegistrarOcorrencia([FromBody] NovaOcorrenciaDto dto)
     {
+        // Pega o id do usuário logado a partir do token JWT
+        var usuarioIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(usuarioIdClaim) || !Guid.TryParse(usuarioIdClaim, out var usuarioId))
+            return Unauthorized("Token inválido ou sem identificação do usuário.");
+
         var novaOcorrencia = new Ocorrencia(
-            dto.UsuarioId, 
+            usuarioId, 
             dto.Titulo,
             dto.Descricao,
             dto.Categoria,
@@ -30,7 +38,6 @@ public class OcorrenciasController : ControllerBase
         );
 
         await _repository.AdicionarAsync(novaOcorrencia);
-
         return CreatedAtAction(nameof(RegistrarOcorrencia), new { id = novaOcorrencia.Id }, novaOcorrencia);
     }
 

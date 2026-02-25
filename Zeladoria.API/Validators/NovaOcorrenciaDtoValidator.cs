@@ -13,10 +13,7 @@ public class NovaOcorrenciaDtoValidator : AbstractValidator<NovaOcorrenciaDto>
 
         RuleFor(x => x.Descricao)
             .NotEmpty().WithMessage("A descrição é obrigatória.")
-            .MaximumLength(500).WithMessage("A descrição não pode passar de 500 caracteres.");
-
-        RuleFor(x => x.UsuarioId)
-            .NotEmpty().WithMessage("O ID do usuário é obrigatório.");
+            .MaximumLength(500).WithMessage("A descrição não pode passar de 500 caracteres.");        
         
         RuleFor(x => x.Latitude)
             .InclusiveBetween(-23.18, -22.98)

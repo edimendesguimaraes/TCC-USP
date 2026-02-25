@@ -3,8 +3,7 @@
 namespace Zeladoria.Application.DTOs;
 
 public class NovaOcorrenciaDto
-{
-    public Guid UsuarioId { get; set; } 
+{    
     public string Titulo { get; set; } = string.Empty;
     public string Descricao { get; set; } = string.Empty;
     public CategoriaProblema Categoria { get; set; }

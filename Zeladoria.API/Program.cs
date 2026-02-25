@@ -1,39 +1,76 @@
-using FluentValidation;
-using FluentValidation.AspNetCore;
-using Zeladoria.Application.Validators;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models; // <-- O .Models voltou para casa!
+using System.Text;
 using Zeladoria.Domain.Interfaces;
 using Zeladoria.Infrastructure.Data;
 using Zeladoria.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Configura os Controllers e o Swagger (A interface de testes)
-builder.Services.AddControllers();
-// Ativa a validação automática e registra o nosso validador
-builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddValidatorsFromAssemblyContaining<NovaOcorrenciaDtoValidator>();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// 1. Configura a Autenticação JWT
+var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new ArgumentNullException("Jwt:Key não configurada");
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+builder.Services.AddAuthorization();
 
-// 2. Configura o Banco de Dados (PostgreSQL)
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+
+// 2. Configura o Swagger Padrão Estável
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Insira APENAS o token JWT gerado no login."
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
 builder.Services.AddDbContext<ZeladoriaDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 3. Injeção de Dependência (Ensina o .NET a usar o seu repositório)
 builder.Services.AddScoped<IOcorrenciaRepository, OcorrenciaRepository>();
 builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 
 var app = builder.Build();
 
-// 4. Habilita o Swagger para visualizarmos a API
 app.UseSwagger();
 app.UseSwaggerUI();
 
+app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();
 
-// Endpoint de saúde da API (Aquele que configuramos para o GitHub Actions)
-app.MapGet("/", () => "API de Zeladoria ativa e operante com Clean Architecture!");
+app.MapControllers();
+app.MapGet("/", () => "API Segura com JWT rodando 100%!");
 
 app.Run();
