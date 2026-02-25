@@ -1,3 +1,6 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Zeladoria.Application.Validators;
 using Microsoft.EntityFrameworkCore;
 using Zeladoria.Domain.Interfaces;
 using Zeladoria.Infrastructure.Data;
@@ -7,6 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 // 1. Configura os Controllers e o Swagger (A interface de testes)
 builder.Services.AddControllers();
+// Ativa a validação automática e registra o nosso validador
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<NovaOcorrenciaDtoValidator>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
