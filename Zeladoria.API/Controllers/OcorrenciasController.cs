@@ -40,4 +40,24 @@ public class OcorrenciasController : ControllerBase
         var ocorrencias = await _repository.ObterTodasAsync();
         return Ok(ocorrencias);
     }
+    
+    [HttpGet("usuario/{usuarioId}")]
+    public async Task<IActionResult> ListarPorUsuario(Guid usuarioId)
+    {
+        var ocorrencias = await _repository.ObterPorUsuarioAsync(usuarioId);
+        return Ok(ocorrencias);
+    }
+    
+    [HttpPatch("{id}/status")]
+    public async Task<IActionResult> AtualizarStatus(Guid id, [FromBody] AtualizarStatusDto dto)
+    {        
+        var ocorrencia = await _repository.ObterPorIdAsync(id);
+
+        if (ocorrencia == null)
+            return NotFound("Ocorrência não encontrada.");
+        
+        ocorrencia.AtualizarStatus(dto.NovoStatus);        
+        await _repository.AtualizarAsync(ocorrencia);
+        return NoContent(); 
+    }
 }

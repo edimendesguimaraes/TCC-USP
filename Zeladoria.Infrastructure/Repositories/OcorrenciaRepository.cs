@@ -29,6 +29,14 @@ public class OcorrenciaRepository : IOcorrenciaRepository
     {
         return await _context.Ocorrencias.FindAsync(id);
     }
+    public async Task<IEnumerable<Ocorrencia>> ObterPorUsuarioAsync(Guid usuarioId)
+    {
+        return await _context.Ocorrencias
+            .AsNoTracking()
+            .Where(o => o.UsuarioId == usuarioId)
+            .OrderByDescending(o => o.DataCriacao) 
+            .ToListAsync();
+    }
 
     public async Task AtualizarAsync(Ocorrencia ocorrencia)
     {
