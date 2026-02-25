@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/Itens de Solução/">
-    <File Path="Dockerfile.txt" />
+    <File Path="Dockerfile" />
   </Folder>
   <Project Path="Zeladoria.API/Zeladoria.API.csproj" />
   <Project Path="Zeladoria.Application/Zeladoria.Application.csproj" />
