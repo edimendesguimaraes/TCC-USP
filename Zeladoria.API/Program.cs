@@ -22,6 +22,7 @@ builder.Services.AddDbContext<ZeladoriaDbContext>(options =>
 
 // 3. Injeção de Dependência (Ensina o .NET a usar o seu repositório)
 builder.Services.AddScoped<IOcorrenciaRepository, OcorrenciaRepository>();
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
 
 var app = builder.Build();
 
