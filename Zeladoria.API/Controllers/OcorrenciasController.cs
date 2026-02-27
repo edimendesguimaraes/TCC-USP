@@ -36,7 +36,7 @@ public class OcorrenciasController : ControllerBase
         if (usuario != null)
         {
             usuario.AdicionarPontos(10);
-            // Aqui precisaria ter um _usuarioRepository.AtualizarAsync(usuario); no seu repo!
+            await _usuarioRepository.AtualizarAsync(usuario);            
         }
 
         return CreatedAtAction(nameof(ListarMinhasOcorrencias), new { id = novaOcorrencia.Id }, novaOcorrencia);
@@ -69,8 +69,8 @@ public class OcorrenciasController : ControllerBase
             var usuario = await _usuarioRepository.ObterPorIdAsync(ocorrencia.UsuarioId);
             if (usuario != null)
             {
-                usuario.AdicionarPontos(pontosGanhos);
-                // _usuarioRepository.AtualizarAsync(usuario);
+                usuario.AdicionarPontos(pontosGanhos);                
+                await _usuarioRepository.AtualizarAsync(usuario);
             }
         }
 

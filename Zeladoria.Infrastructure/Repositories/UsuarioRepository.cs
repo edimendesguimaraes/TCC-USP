@@ -30,4 +30,14 @@ public class UsuarioRepository : IUsuarioRepository
     {
         return await _context.Usuarios.FindAsync(id);
     }
+    public async Task<IEnumerable<Usuario>> ObterTodosAsync()
+    {
+        return await _context.Usuarios.AsNoTracking().ToListAsync();
+    }
+
+    public async Task AtualizarAsync(Usuario usuario)
+    {
+        _context.Usuarios.Update(usuario);
+        await _context.SaveChangesAsync();
+    }
 }
