@@ -51,6 +51,12 @@ namespace Zeladoria.Infrastructure.Migrations
                     b.Property<double>("Longitude")
                         .HasColumnType("double precision");
 
+                    b.Property<int>("PontosDistribuidos")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RespostaPrefeitura")
+                        .HasColumnType("text");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -92,6 +98,9 @@ namespace Zeladoria.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Pontos")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

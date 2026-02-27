@@ -12,8 +12,8 @@ using Zeladoria.Infrastructure.Data;
 namespace Zeladoria.Infrastructure.Migrations
 {
     [DbContext(typeof(ZeladoriaDbContext))]
-    [Migration("20260225144927_AdicionandoUsuarioId")]
-    partial class AdicionandoUsuarioId
+    [Migration("20260227173147_InicialGamificacao")]
+    partial class InicialGamificacao
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -54,6 +54,12 @@ namespace Zeladoria.Infrastructure.Migrations
                     b.Property<double>("Longitude")
                         .HasColumnType("double precision");
 
+                    b.Property<int>("PontosDistribuidos")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RespostaPrefeitura")
+                        .HasColumnType("text");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -67,7 +73,53 @@ namespace Zeladoria.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("UsuarioId");
+
                     b.ToTable("Ocorrencias");
+                });
+
+            modelBuilder.Entity("Zeladoria.Domain.Entities.Usuario", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("DataCadastro")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("ExternalAuthId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Pontos")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExternalAuthId")
+                        .IsUnique();
+
+                    b.ToTable("Usuarios");
+                });
+
+            modelBuilder.Entity("Zeladoria.Domain.Entities.Ocorrencia", b =>
+                {
+                    b.HasOne("Zeladoria.Domain.Entities.Usuario", null)
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

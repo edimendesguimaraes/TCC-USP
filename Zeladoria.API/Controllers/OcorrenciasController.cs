@@ -6,65 +6,74 @@ using Zeladoria.Domain.Entities;
 using Zeladoria.Domain.Interfaces;
 
 namespace Zeladoria.API.Controllers;
+
 [Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class OcorrenciasController : ControllerBase
 {
-    private readonly IOcorrenciaRepository _repository;
+    private readonly IOcorrenciaRepository _ocorrenciaRepository;
+    private readonly IUsuarioRepository _usuarioRepository; 
 
-    public OcorrenciasController(IOcorrenciaRepository repository)
+    public OcorrenciasController(IOcorrenciaRepository ocorrenciaRepository, IUsuarioRepository usuarioRepository)
     {
-        _repository = repository;
+        _ocorrenciaRepository = ocorrenciaRepository;
+        _usuarioRepository = usuarioRepository;
     }
 
     [HttpPost]
     public async Task<IActionResult> RegistrarOcorrencia([FromBody] NovaOcorrenciaDto dto)
     {
-        // Pega o id do usuário logado a partir do token JWT
         var usuarioIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
         if (string.IsNullOrEmpty(usuarioIdClaim) || !Guid.TryParse(usuarioIdClaim, out var usuarioId))
-            return Unauthorized("Token inválido ou sem identificação do usuário.");
+            return Unauthorized("Token inválido.");
 
-        var novaOcorrencia = new Ocorrencia(
-            usuarioId, 
-            dto.Titulo,
-            dto.Descricao,
-            dto.Categoria,
-            dto.Latitude,
-            dto.Longitude,
-            dto.FotoUrl
-        );
+        var novaOcorrencia = new Ocorrencia(usuarioId, dto.Titulo, dto.Descricao, dto.Categoria, dto.Latitude, dto.Longitude, dto.FotoUrl);
+        await _ocorrenciaRepository.AdicionarAsync(novaOcorrencia);
 
-        await _repository.AdicionarAsync(novaOcorrencia);
-        return CreatedAtAction(nameof(RegistrarOcorrencia), new { id = novaOcorrencia.Id }, novaOcorrencia);
+        // GAMIFICAÇÃO: Dá 10 pontos pela criação
+        var usuario = await _usuarioRepository.ObterPorIdAsync(usuarioId);
+        if (usuario != null)
+        {
+            usuario.AdicionarPontos(10);
+            // Aqui precisaria ter um _usuarioRepository.AtualizarAsync(usuario); no seu repo!
+        }
+
+        return CreatedAtAction(nameof(ListarMinhasOcorrencias), new { id = novaOcorrencia.Id }, novaOcorrencia);
     }
 
-    [HttpGet]
-    public async Task<IActionResult> ListarOcorrencias()
+    // NOVA ROTA OTIMIZADA PARA O APLICATIVO
+    [HttpGet("minhas")]
+    public async Task<IActionResult> ListarMinhasOcorrencias()
     {
-        var ocorrencias = await _repository.ObterTodasAsync();
+        var usuarioIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(usuarioIdClaim) || !Guid.TryParse(usuarioIdClaim, out var usuarioId))
+            return Unauthorized("Token inválido.");
+
+        var ocorrencias = await _ocorrenciaRepository.ObterPorUsuarioAsync(usuarioId);
         return Ok(ocorrencias);
     }
-    
-    [HttpGet("usuario/{usuarioId}")]
-    public async Task<IActionResult> ListarPorUsuario(Guid usuarioId)
-    {
-        var ocorrencias = await _repository.ObterPorUsuarioAsync(usuarioId);
-        return Ok(ocorrencias);
-    }
-    
+
     [HttpPatch("{id}/status")]
     public async Task<IActionResult> AtualizarStatus(Guid id, [FromBody] AtualizarStatusDto dto)
-    {        
-        var ocorrencia = await _repository.ObterPorIdAsync(id);
+    {
+        var ocorrencia = await _ocorrenciaRepository.ObterPorIdAsync(id);
+        if (ocorrencia == null) return NotFound("Ocorrência não encontrada.");
 
-        if (ocorrencia == null)
-            return NotFound("Ocorrência não encontrada.");
-        
-        ocorrencia.AtualizarStatus(dto.NovoStatus);        
-        await _repository.AtualizarAsync(ocorrencia);
-        return NoContent(); 
+        // GAMIFICAÇÃO: Atualiza o status e pega quantos pontos extras a pessoa ganhou
+        int pontosGanhos = ocorrencia.AtualizarStatus(dto.NovoStatus, dto.RespostaPrefeitura);
+        await _ocorrenciaRepository.AtualizarAsync(ocorrencia);
+
+        if (pontosGanhos > 0)
+        {
+            var usuario = await _usuarioRepository.ObterPorIdAsync(ocorrencia.UsuarioId);
+            if (usuario != null)
+            {
+                usuario.AdicionarPontos(pontosGanhos);
+                // _usuarioRepository.AtualizarAsync(usuario);
+            }
+        }
+
+        return NoContent();
     }
 }
