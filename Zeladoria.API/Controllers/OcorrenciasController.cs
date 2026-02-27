@@ -42,6 +42,18 @@ public class OcorrenciasController : ControllerBase
         return CreatedAtAction(nameof(ListarMinhasOcorrencias), new { id = novaOcorrencia.Id }, novaOcorrencia);
     }
 
+    
+    [HttpGet("todas")]
+    public async Task<IActionResult> ListarTodasOcorrencias()
+    {
+        var usuarioIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(usuarioIdClaim) || !Guid.TryParse(usuarioIdClaim, out var usuarioId))
+            return Unauthorized("Token inválido.");
+
+        var ocorrencias = await _ocorrenciaRepository.ObterTodasAsync();
+        return Ok(ocorrencias);
+    }
+
     // NOVA ROTA OTIMIZADA PARA O APLICATIVO
     [HttpGet("minhas")]
     public async Task<IActionResult> ListarMinhasOcorrencias()
