@@ -39,7 +39,7 @@ public class OcorrenciasController : ControllerBase
             await _usuarioRepository.AtualizarAsync(usuario);            
         }
 
-        return CreatedAtAction(nameof(ListarMinhasOcorrencias), new { id = novaOcorrencia.Id }, novaOcorrencia);
+        return StatusCode(201, novaOcorrencia);
     }
 
     
