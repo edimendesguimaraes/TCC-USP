@@ -37,24 +37,7 @@ public class AuthController : ControllerBase
         var token = GerarTokenJwt(usuario);
 
         return Ok(new { Token = token, Usuario = usuario.Nome });
-    }
-
-    [HttpPost("login-simulado-2")]
-    public async Task<IActionResult> LoginSimulado2([FromBody] RegistrarUsuarioDto dto)
-    {
-        var usuario = await _usuarioRepository.ObterPorExternalAuthIdAsync(dto.ExternalAuthId);
-
-        if (usuario == null)
-        {
-            usuario = new Usuario(dto.ExternalAuthId, dto.Nome, dto.Email);
-            await _usuarioRepository.AdicionarAsync(usuario);
-        }
-
-        // Gera o Token com o ID do usuário dentro dele
-        var token = GerarTokenJwt(usuario);
-
-        return Ok(new { Token = token, Usuario = usuario.Nome });
-    }
+    }  
 
     private string GerarTokenJwt(Usuario usuario)
     {
