@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using FirebaseAdmin.Auth;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -22,22 +23,36 @@ public class AuthController : ControllerBase
         _configuration = configuration; // Para ler a chave secreta do appsettings
     }
 
-    [HttpPost("login-simulado")]
-    public async Task<IActionResult> LoginSimulado([FromBody] RegistrarUsuarioDto dto)
+    [HttpPost("login")]
+    public async Task<IActionResult> LoginOficial([FromBody] LoginGoogleDto dto)
     {
-        var usuario = await _usuarioRepository.ObterPorExternalAuthIdAsync(dto.ExternalAuthId);
+        try
+        {            
+            FirebaseToken decodedToken = await FirebaseAuth.DefaultInstance.VerifyIdTokenAsync(dto.TokenFirebase);
 
-        if (usuario == null)
-        {
-            usuario = new Usuario(dto.ExternalAuthId, dto.Nome, dto.Email);
-            await _usuarioRepository.AdicionarAsync(usuario);
+            // 2. Extraímos os dados 100% confiáveis que vieram do Google
+            string externalAuthId = decodedToken.Uid;
+            string email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString() : "";
+            string nome = decodedToken.Claims.ContainsKey("name") ? decodedToken.Claims["name"].ToString() : "Cidadão";
+            
+            var usuario = await _usuarioRepository.ObterPorExternalAuthIdAsync(externalAuthId);
+
+            if (usuario == null)
+            {
+                usuario = new Usuario(externalAuthId, nome, email);
+                await _usuarioRepository.AdicionarAsync(usuario);
+            }
+
+            var tokenJwt = GerarTokenJwt(usuario);
+
+            return Ok(new { Token = tokenJwt, Usuario = usuario.Nome });
         }
-
-        // Gera o Token com o ID do usuário dentro dele
-        var token = GerarTokenJwt(usuario);
-
-        return Ok(new { Token = token, Usuario = usuario.Nome });
-    }  
+        catch (Exception ex)
+        {
+            // Se o token for falso, expirado ou inventado, cai aqui na hora!
+            return Unauthorized(new { Erro = "Acesso Negado. Token do Google inválido ou forjado." });
+        }
+    }
 
     private string GerarTokenJwt(Usuario usuario)
     {
